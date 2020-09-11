@@ -134,7 +134,7 @@ class TFDeepExplainer(Explainer):
                     self.session = keras.backend.get_session()
                 else:
                     #tf1
-                    self.session=tf.get_default_session()
+                    self.session=tf.keras.backend.get_session()
             except:
                 #tf2
                 self.session = tf.compat.v1.keras.backend.get_session()
