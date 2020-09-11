@@ -131,12 +131,11 @@ class TFDeepExplainer(Explainer):
         if session is None:
             if keras is not None and hasattr(keras.backend.tensorflow_backend, "_SESSION") and keras.backend.tensorflow_backend._SESSION is not None:
                 #tf1
-                self.session=tf.get_default_session()
+                session=keras.backend.get_session() 
             else: 
                 #tf2:
-                self.session = tf.compat.v1.keras.backend.get_session()
-        else:
-            self.session=session
+                session = tf.compat.v1.keras.backend.get_session()
+        self.session=tf.get_default_session() if session is None else session 
         # if no learning phase flags were given we go looking for them
         # ...this will catch the one that keras uses
         # we need to find them since we want to make sure learning phase flags are set to False
