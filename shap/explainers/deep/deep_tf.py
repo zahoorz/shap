@@ -128,14 +128,14 @@ class TFDeepExplainer(Explainer):
         self.orig_grads = {}
         
         # if we are not given a session find a default session
-        if session is None:
+        try:
             if keras is not None and hasattr(keras.backend.tensorflow_backend, "_SESSION") and keras.backend.tensorflow_backend._SESSION is not None:
+                self.session = keras.backend.get_session()
+            else:
                 #tf1
-                session=keras.backend.get_session() 
-            else: 
-                #tf2:
-                session = tf.compat.v1.keras.backend.get_session()
-        self.session=tf.get_default_session() if session is None else session 
+                self.session=tf.get_default_session()
+        except:
+            self.session = tf.compat.v1.keras.backend.get_session()
         # if no learning phase flags were given we go looking for them
         # ...this will catch the one that keras uses
         # we need to find them since we want to make sure learning phase flags are set to False
