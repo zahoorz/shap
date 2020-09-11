@@ -129,10 +129,10 @@ class TFDeepExplainer(Explainer):
         
         # if we are not given a session find a default session
         if session is None:
-            try:
+            if keras is not None and hasattr(keras.backend.tensorflow_backend, "_SESSION") and keras.backend.tensorflow_backend._SESSION is not None:
                 #tf1
                 self.session=tf.get_default_session()
-            except:
+            else: 
                 #tf2:
                 self.session = tf.compat.v1.keras.backend.get_session()
         else:
