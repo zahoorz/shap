@@ -129,13 +129,17 @@ class TFDeepExplainer(Explainer):
         
         # if we are not given a session find a default session
         if session is None:
-            # if keras is installed and already has a session then use it
-            if keras is not None and keras.backend.tensorflow_backend._SESSION is not None:
-                session = keras.backend.get_session()
-            else:
-                session = tf.compat.v1.keras.backend.get_session()
-        self.session = tf.get_default_session() if session is None else session
-
+            try:
+                if keras is not None and hasattr(keras.backend.tensorflow_backend, "_SESSION") and keras.backend.tensorflow_backend._SESSION is not None:
+                    self.session = keras.backend.get_session()
+                else:
+                    #tf1
+                    self.session=tf.get_default_session()
+            except:
+                #tf2
+                self.session = tf.compat.v1.keras.backend.get_session()
+        else:
+            self.session= session
         # if no learning phase flags were given we go looking for them
         # ...this will catch the one that keras uses
         # we need to find them since we want to make sure learning phase flags are set to False
@@ -191,7 +195,6 @@ class TFDeepExplainer(Explainer):
                 self.phi_symbolics = [None for i in range(noutputs)]
             else:
                 raise Exception("The model output tensor to be explained cannot have a static shape in dim 1 of None!")
-
     def _variable_inputs(self, op):
         """ Return which inputs of this operation are variable (i.e. depend on the model inputs).
         """
@@ -316,6 +319,15 @@ class TFDeepExplainer(Explainer):
         feed_dict = dict(zip(model_inputs, X))
         for t in self.learning_phase_flags:
             feed_dict[t] = False
+        import tensorflow
+        try:
+            #tf 1
+            self.session=tf.session()
+        except:
+            #tf 2
+            from tensorflow.compat.v1.keras.backend import get_session
+            tensorflow.compat.v1.disable_v2_behavior()
+            self.session=get_session()
         return self.session.run(out, feed_dict)
 
     def custom_grad(self, op, *grads):
