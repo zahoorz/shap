@@ -18,7 +18,8 @@ class DeepExplainer(Explainer):
 
     def __init__(self, model, data,
                  session=None, learning_phase_flags=None,
-                 combine_mult_and_diffref=standard_combine_mult_and_diffref):
+                 combine_mult_and_diffref=standard_combine_mult_and_diffref,
+                 inputs_to_explain=None):
         """ An explainer object for a differentiable model using a given background dataset.
 
         Note that the complexity of the method scales linearly with the number of background data
@@ -62,6 +63,8 @@ class DeepExplainer(Explainer):
              the use case (e.g. for computing hypothetical contributions
              in genomic data)
 
+        inputs_to_explain : list of indices of which input tensors to explain
+
         if framework == 'tensorflow':
 
         session : None or tensorflow.Session
@@ -94,8 +97,12 @@ class DeepExplainer(Explainer):
         if framework == 'tensorflow':
             self.explainer = TFDeepExplainer(model=model, data=data,
                 session=session, learning_phase_flags=learning_phase_flags,
-                combine_mult_and_diffref=combine_mult_and_diffref)
+                combine_mult_and_diffref=combine_mult_and_diffref,
+                inputs_to_explain=inputs_to_explain)
         elif framework == 'pytorch':
+            if (inputs_to_explain is not None):
+                print("WARNING: I (Av) have not implemented the"
+                      +" inputs_to_explain functionality for pytorch yet")
             self.explainer = PyTorchDeepExplainer(model=model, data=data,
                 combine_mult_and_diffref=combine_mult_and_diffref)
 

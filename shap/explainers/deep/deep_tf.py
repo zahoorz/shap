@@ -19,7 +19,8 @@ class TFDeepExplainer(Explainer):
 
     def __init__(self, model, data, session=None, learning_phase_flags=None,
                        combine_mult_and_diffref=
-                        standard_combine_mult_and_diffref):
+                        standard_combine_mult_and_diffref,
+                       inputs_to_explain=None):
         """ An explainer object for a deep model using a given background dataset.
 
         Note that the complexity of the method scales linearly with the number of background data
@@ -64,6 +65,8 @@ class TFDeepExplainer(Explainer):
              However, different approaches may be applied depending on
              the use case (e.g. for computing hypothetical contributions
              in genomic data)
+
+        inputs_to_explain : list of indices of which input tensors to explain
         """
 
         self.combine_mult_and_diffref = combine_mult_and_diffref
@@ -120,6 +123,11 @@ class TFDeepExplainer(Explainer):
             self.multi_input = False
             if type(self.model_inputs) != list:
                 self.model_inputs = [self.model_inputs]
+        if (inputs_to_explain is None):
+            #Explain all the inputs
+            inputs_to_explain = list(range(len(self.model_inputs)))
+        self.inputs_to_explain = inputs_to_explain
+
         if type(data) != list and (hasattr(data, '__call__')==False):
             data = [data]
         self.data = data
@@ -170,7 +178,8 @@ class TFDeepExplainer(Explainer):
             dependence_breakers
         )
         self.between_ops = forward_walk_ops(
-            [op for input in self.model_inputs for op in input.consumers()],
+            [op for i in self.inputs_to_explain
+             for op in self.model_inputs[i].consumers()],
             tensor_blacklist, dependence_breakers,
             within_ops=back_ops
         )
@@ -195,6 +204,7 @@ class TFDeepExplainer(Explainer):
                 self.phi_symbolics = [None for i in range(noutputs)]
             else:
                 raise Exception("The model output tensor to be explained cannot have a static shape in dim 1 of None!")
+
     def _variable_inputs(self, op):
         """ Return which inputs of this operation are variable (i.e. depend on the model inputs).
         """
@@ -226,7 +236,9 @@ class TFDeepExplainer(Explainer):
             # define the computation graph for the attribution values using custom a gradient-like computation
             try:
                 out = self.model_output[:,i] if self.multi_output else self.model_output
-                self.phi_symbolics[i] = tf.gradients(out, self.model_inputs)
+                self.phi_symbolics[i] = tf.gradients(
+                    out, [self.model_inputs[toexpl]
+                          for toexpl in self.inputs_to_explain])
 
             finally:
 
@@ -272,7 +284,7 @@ class TFDeepExplainer(Explainer):
         output_phis = []
         for i in range(model_output_ranks.shape[1]):
             phis = []
-            for k in range(len(X)):
+            for k in self.inputs_to_explain:
                 phis.append(np.zeros(X[k].shape))
             for j in range(X[0].shape[0]):
                 if (progress_message is not None):
@@ -297,9 +309,9 @@ class TFDeepExplainer(Explainer):
                 # to get the final attributions
                 phis_j = self.combine_mult_and_diffref(
                     mult=[sample_phis[l][:-bg_data[l].shape[0]]
-                          for l in range(len(X))],
-                    orig_inp=[X[l][j] for l in range(len(X))],
-                    bg_data=bg_data)
+                          for l in self.inputs_to_explain],
+                    orig_inp=[X[l][j] for l in self.inputs_to_explain],
+                    bg_data=[bg_data[l] for l in self.inputs_to_explain])
 
                 # assign the attributions to the right part of the output arrays
                 for l in range(len(X)):
