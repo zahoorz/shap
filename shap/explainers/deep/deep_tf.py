@@ -20,6 +20,7 @@ def get_session():
     except:
         #tf2
         session = tf.compat.v1.keras.backend.get_session()
+    return session
 
 
 class TFDeepExplainer(Explainer):
