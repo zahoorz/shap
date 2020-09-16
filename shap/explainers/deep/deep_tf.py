@@ -10,6 +10,18 @@ tf_ops = None
 tf_gradients_impl = None
 
 
+def get_session():
+    try:
+        if keras is not None and hasattr(keras.backend.tensorflow_backend, "_SESSION") and keras.backend.tensorflow_backend._SESSION is not None:
+            session = keras.backend.get_session()
+        else:
+            #tf1
+            session = tf.keras.backend.get_session()
+    except:
+        #tf2
+        session = tf.compat.v1.keras.backend.get_session()
+
+
 class TFDeepExplainer(Explainer):
     """
     Using tf.gradients to implement the backgropagation was
@@ -137,17 +149,8 @@ class TFDeepExplainer(Explainer):
         
         # if we are not given a session find a default session
         if session is None:
-            try:
-                if keras is not None and hasattr(keras.backend.tensorflow_backend, "_SESSION") and keras.backend.tensorflow_backend._SESSION is not None:
-                    self.session = keras.backend.get_session()
-                else:
-                    #tf1
-                    self.session=tf.keras.backend.get_session()
-            except:
-                #tf2
-                self.session = tf.compat.v1.keras.backend.get_session()
-        else:
-            self.session= session
+            session = get_session()
+        self.session= session
         # if no learning phase flags were given we go looking for them
         # ...this will catch the one that keras uses
         # we need to find them since we want to make sure learning phase flags are set to False
