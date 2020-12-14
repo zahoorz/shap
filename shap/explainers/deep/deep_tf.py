@@ -319,15 +319,6 @@ class TFDeepExplainer(Explainer):
         feed_dict = dict(zip(model_inputs, X))
         for t in self.learning_phase_flags:
             feed_dict[t] = False
-        import tensorflow
-        try:
-            #tf 1
-            self.session=tf.session()
-        except:
-            #tf 2
-            from tensorflow.compat.v1.keras.backend import get_session
-            tensorflow.compat.v1.disable_v2_behavior()
-            self.session=get_session()
         return self.session.run(out, feed_dict)
 
     def custom_grad(self, op, *grads):
