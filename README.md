@@ -1,3 +1,4 @@
+Fork of shap for computing hypothetical importance scores
 
 This is a custom fork of the shap repository that has support for computing hypothetical importance scores, for use with TF-MoDISco. It was originally forked under AvantiShri/shap. Please see [these slides](https://docs.google.com/presentation/d/1JCLMTW7ppA3Oaz9YA2ldDgx8ItW9XHASXM1B3regxPw/edit?usp=sharing) for a tutorial on DeepSHAP for genomics.
 ---
